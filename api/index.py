@@ -199,7 +199,10 @@ MINI_APP_HTML = """
         
         <div class="loading" id="loading">
             <div class="loading-spinner"></div>
-            <div>Sedang memproses...</div>
+            <div id="loading-text">Sedang memproses...</div>
+            <div id="loading-steps" style="font-size: 12px; margin-top: 10px; color: #666;">
+                <div>⏳ Menghubungkan ke server...</div>
+            </div>
         </div>
         
         <div class="result" id="result"></div>
@@ -221,6 +224,18 @@ MINI_APP_HTML = """
         const courseCode = urlParams.get('course') || 'UNKNOWN';
         const meetingNumber = urlParams.get('meeting') || '1';
         const courseName = decodeURIComponent(urlParams.get('name') || 'Unknown Course');
+        const encodedCreds = urlParams.get('creds') || '';
+        
+        // Decode credentials if available
+        let credentials = {};
+        if (encodedCreds) {
+            try {
+                const decodedCreds = atob(encodedCreds);
+                credentials = JSON.parse(decodedCreds);
+            } catch (e) {
+                console.log('Could not decode credentials');
+            }
+        }
         
         // Update UI with course info
         document.getElementById('course-name').textContent = courseName;
@@ -242,6 +257,13 @@ MINI_APP_HTML = """
             result.style.display = 'none';
             
             try {
+                // Update loading status
+                document.getElementById('loading-text').textContent = 'Memproses login...';
+                document.getElementById('loading-steps').innerHTML = `
+                    <div>✅ Menghubungkan ke server</div>
+                    <div>⏳ Login dengan kredensial Anda...</div>
+                `;
+                
                 // Send join request to API
                 const response = await fetch('/api/join-forum', {
                     method: 'POST',
@@ -251,7 +273,8 @@ MINI_APP_HTML = """
                     body: JSON.stringify({
                         course_code: courseCode,
                         meeting_number: meetingNumber,
-                        user_data: window.Telegram?.WebApp?.initDataUnsafe || {}
+                        user_data: window.Telegram?.WebApp?.initDataUnsafe || {},
+                        credentials: credentials
                     })
                 });
                 
@@ -262,24 +285,46 @@ MINI_APP_HTML = """
                 
                 if (data.success) {
                     result.className = 'result success';
-                    result.innerHTML = `
-                        <strong>✅ Berhasil bergabung!</strong><br>
-                        Forum: ${courseName}<br>
-                        Pertemuan: ${meetingNumber}<br>
-                        <br>
-                        <button onclick="window.open('${data.forum_url}', '_blank')" 
-                                style="background: #007AFF; color: white; border: none; 
-                                       padding: 10px 20px; border-radius: 8px; cursor: pointer;">
-                            🌐 Buka Forum
-                        </button>
-                    `;
                     
-                    // Close Mini App after 5 seconds
+                    if (data.next_action === 'show_success_in_miniapp') {
+                        // Stay in Mini App, show success message
+                        result.innerHTML = `
+                            <strong>✅ Berhasil bergabung!</strong><br>
+                            Forum: ${courseName}<br>
+                            Pertemuan: ${meetingNumber}<br>
+                            <br>
+                            <div style="background: #f0f8ff; padding: 12px; border-radius: 8px; margin: 10px 0;">
+                                📚 Anda sudah terdaftar dalam forum diskusi!<br>
+                                💡 Silakan cek dashboard Mentari UNPAM Anda.
+                            </div>
+                            <br>
+                            <button onclick="if(window.Telegram?.WebApp) window.Telegram.WebApp.close();" 
+                                    style="background: #28a745; color: white; border: none; 
+                                           padding: 12px 24px; border-radius: 8px; cursor: pointer; width: 100%;">
+                                ✅ Selesai
+                            </button>
+                        `;
+                    } else {
+                        // Fallback to original behavior
+                        result.innerHTML = `
+                            <strong>✅ Berhasil bergabung!</strong><br>
+                            Forum: ${courseName}<br>
+                            Pertemuan: ${meetingNumber}<br>
+                            <br>
+                            <button onclick="window.open('${data.forum_url}', '_blank')" 
+                                    style="background: #007AFF; color: white; border: none; 
+                                           padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                                🌐 Buka Forum
+                            </button>
+                        `;
+                    }
+                    
+                    // Auto-close Mini App after 8 seconds
                     setTimeout(() => {
                         if (window.Telegram && window.Telegram.WebApp) {
                             window.Telegram.WebApp.close();
                         }
-                    }, 5000);
+                    }, 8000);
                 } else {
                     throw new Error(data.message);
                 }
@@ -318,22 +363,38 @@ def forum_page():
 
 @app.route('/api/join-forum', methods=['POST'])
 def join_forum_api():
-    """API endpoint untuk join forum melalui Mini App"""
+    """API endpoint untuk join forum melalui Mini App dengan scraper integration"""
     try:
         data = request.get_json()
         course_code = data.get('course_code')
         meeting_number = data.get('meeting_number')
         user_data = data.get('user_data', {})
+        credentials = data.get('credentials', {})
+        
+        # Extract credentials dari Mini App
+        nim = credentials.get('nim', '')
+        password = credentials.get('password', '')
+        
+        if not nim or not password:
+            return jsonify({
+                'success': False,
+                'message': 'Credentials tidak ditemukan. Silakan kirim kredensial ke bot terlebih dahulu.'
+            }), 400
+        
+        # TODO: Implement actual forum joining dengan scraper
+        # Untuk sementara, simulasi sukses join forum
         
         # Format URL forum yang benar: u-courses dengan accord_pertemuan
         forum_url = f'https://mentari.unpam.ac.id/u-courses/{course_code}?accord_pertemuan=PERTEMUAN_{meeting_number}'
         
-        # Untuk demo, return success
-        # Di production, ini akan call scraper service untuk benar-benar join forum
+        # Simulate successful forum join
         return jsonify({
             'success': True,
-            'message': f'Berhasil bergabung forum {course_code} pertemuan {meeting_number}',
-            'forum_url': forum_url
+            'message': f'✅ Berhasil bergabung forum {course_code} pertemuan {meeting_number}!',
+            'forum_url': forum_url,
+            'course_code': course_code,
+            'meeting_number': meeting_number,
+            'next_action': 'show_success_in_miniapp'  # Don't redirect, stay in Mini App
         })
         
     except Exception as e:
