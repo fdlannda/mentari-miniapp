@@ -6,7 +6,8 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import ContextTypes
 from telegram.error import NetworkError, TelegramError
-from forum_tracker import get_user_completions, mark_forum_completed
+from forum_tracker import get_user_complet        # Generate Mini App URL dengan parameter forum dan credentials
+        miniapp_url = f"https://mentari-miniapp.vercel.app/forum?course_code={actual_course_code}&course_title={forum['course_name'][:30].replace(' ', '%20')}&meeting_number={forum['meeting_number']}&creds={encoded_creds}"_forum_completed
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +219,7 @@ def extract_available_forums_from_result(result: str) -> list:
                                 'MATEMATIKA DISKRIT': '20251-03TPLK006-22TIF0142',
                                 'JARINGAN KOMPUTER': '20251-03TPLK006-22TIF0133'
                             }
-                            current_course_code = course_map.get(current_course, course_map.get('STATISTIKA DAN PROBABILITAS', '20251-03TPLK006-22TIF0093'))
+                            current_course_code = course_map.get(current_course, None)  # Don't fallback to STATISTIKA
                         
                         if current_course:
                             # Always use course_code from mapping to ensure consistency
@@ -228,15 +229,17 @@ def extract_available_forums_from_result(result: str) -> list:
                                 'MATEMATIKA DISKRIT': '20251-03TPLK006-22TIF0142',
                                 'JARINGAN KOMPUTER': '20251-03TPLK006-22TIF0133'
                             }
-                            # Always prioritize mapping over extracted code
-                            final_course_code = course_map.get(current_course, current_course_code or 'UNKNOWN-CODE')
+                            # Always prioritize mapping over any extracted code
+                            final_course_code = course_map.get(current_course)
                             
-                            available_forums.append({
-                                'course_name': current_course,
-                                'course_code': final_course_code,
-                                'meeting_number': meeting_number,
-                                'status': 'available'
-                            })
+                            # Only add if we have a valid mapping
+                            if final_course_code:
+                                available_forums.append({
+                                    'course_name': current_course,
+                                    'course_code': final_course_code,
+                                    'meeting_number': meeting_number,
+                                    'status': 'available'
+                                })
                 except (ValueError, AttributeError):
                     continue
     
@@ -298,11 +301,13 @@ def create_miniapp_keyboard(available_forums: list, user_credentials=None, compl
             'JARINGAN KOMPUTER': '20251-03TPLK006-22TIF0133'
         }
         
-        # Get actual course code from mapping
-        actual_course_code = course_code_mapping.get(
-            forum['course_name'], 
-            forum['course_code']  # fallback to original
-        )
+        # Get actual course code from mapping (should always exist now)
+        actual_course_code = course_code_mapping.get(forum['course_name'])
+        
+        # Skip if no mapping found (safety check)
+        if not actual_course_code:
+            print(f"WARNING: No course code mapping for: {forum['course_name']}")
+            continue
         
         # DEBUG: Log untuk troubleshooting
         print(f"DEBUG CREATE MINIAPP KEYBOARD:")
