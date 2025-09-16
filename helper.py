@@ -304,6 +304,14 @@ def create_miniapp_keyboard(available_forums: list, user_credentials=None, compl
             forum['course_code']  # fallback to original
         )
         
+        # DEBUG: Log untuk troubleshooting
+        print(f"DEBUG CREATE MINIAPP KEYBOARD:")
+        print(f"  Course Name: {forum['course_name']}")
+        print(f"  Original Course Code: {forum['course_code']}")
+        print(f"  Mapped Course Code: {actual_course_code}")
+        print(f"  Meeting: {forum['meeting_number']}")
+        print("="*50)
+        
         # Create Mini App URL dengan parameter forum dan credentials
         miniapp_url = f"https://mentari-miniapp.vercel.app/forum?course_code={actual_course_code}&course_title={forum['course_name'][:30].replace(' ', '%20')}&meeting_number={forum['meeting_number']}&creds={encoded_creds}"
         

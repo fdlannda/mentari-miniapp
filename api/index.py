@@ -287,10 +287,11 @@ def index():
             const courseTitle = decodeURIComponent(urlParams.get('course_title') || 'Course Title');
             const meetingNumber = urlParams.get('meeting_number') || '1';
             
-            // Debug: Log parameters
-            console.log('URL Parameters:', {
+            // Debug: Log parameters with timestamp to force refresh
+            console.log('URL Parameters (v1.2.1):', {
                 courseCode, courseTitle, meetingNumber,
-                fullURL: window.location.href
+                fullURL: window.location.href,
+                timestamp: new Date().toISOString()
             });
             
             // Update UI with course info
@@ -314,8 +315,14 @@ def index():
             }
 
             function proceedToForum() {
+                // Debug: Log course code before creating URL
+                console.log('Creating forum URL with courseCode:', courseCode);
+                
                 // Open forum in new tab
                 const forumUrl = `https://mentari.unpam.ac.id/u-courses/${courseCode}?accord_pertemuan=PERTEMUAN_${meetingNumber}`;
+                
+                console.log('Generated forum URL:', forumUrl);
+                
                 window.open(forumUrl, '_blank');
                 
                 // Show working view
