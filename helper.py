@@ -6,8 +6,7 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import ContextTypes
 from telegram.error import NetworkError, TelegramError
-from forum_tracker import get_user_complet        # Generate Mini App URL dengan parameter forum dan credentials
-        miniapp_url = f"https://mentari-miniapp.vercel.app/forum?course_code={actual_course_code}&course_title={forum['course_name'][:30].replace(' ', '%20')}&meeting_number={forum['meeting_number']}&creds={encoded_creds}"_forum_completed
+from forum_tracker import get_user_completions
 
 logger = logging.getLogger(__name__)
 
@@ -441,8 +440,18 @@ async def send_result_or_error(update, context, nim: str, password: str, scrape_
         # Extract available forums for Mini App
         available_forums = extract_available_forums_from_result(result)
         
+        # DEBUG: Log available forums
+        print(f"DEBUG AVAILABLE FORUMS: {len(available_forums)} found")
+        for i, forum in enumerate(available_forums):
+            print(f"  {i+1}. {forum['course_name']} - Pertemuan {forum['meeting_number']}")
+        
         # Get user's completed forums
         user_completions = get_user_completions(nim)
+        
+        # DEBUG: Log completed forums
+        print(f"DEBUG COMPLETED FORUMS: {len(user_completions)} found")
+        for i, comp in enumerate(user_completions):
+            print(f"  {i+1}. {comp.get('course_code', 'N/A')} - Meeting {comp.get('meeting_number', 'N/A')} - Status: {comp.get('status', 'N/A')}")
         
         # Filter available forums to show only pending ones
         pending_forums = []
@@ -468,6 +477,12 @@ async def send_result_or_error(update, context, nim: str, password: str, scrape_
             
             if not is_completed:
                 pending_forums.append(forum)
+        
+        # DEBUG: Log pending forums
+        print(f"DEBUG PENDING FORUMS: {len(pending_forums)} found")
+        for i, forum in enumerate(pending_forums):
+            print(f"  {i+1}. {forum['course_name']} - Pertemuan {forum['meeting_number']}")
+        print("="*50)
         
         # Update forum count in message
         total_available = len(available_forums)
