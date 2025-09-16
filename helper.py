@@ -126,19 +126,34 @@ def verify_forum_participation(course_code: str, meeting_number: str, forum_url:
         }
 
 def format_result_message(hasil: str, nim: str = None, available_forums: list = None) -> str:
-    """Format the final result message with Mini App support - keep original detailed format"""
-    # Keep the original detailed format from hasil
-    # Just add Mini App info at the end if available forums exist
+    """Format the final result message with Mini App support - improved readability"""
     
-    footer_addition = ""
+    # Keep the original detailed format from hasil
+    formatted_result = hasil
     
     # Add Mini App section if there are available forums
     if available_forums and len(available_forums) > 0:
-        footer_addition = f"\n\n🚀 *MINI APP TERSEDIA!*\n"
-        footer_addition += f"📱 {len(available_forums)} forum siap untuk di-join\n"
-        footer_addition += f"💡 Gunakan tombol Mini App di bawah untuk bergabung dengan mudah!"
+        mini_app_section = f"\n\n{'='*40}\n"
+        mini_app_section += f"🚀 *MINI APP TERSEDIA!*\n"
+        mini_app_section += f"{'='*40}\n\n"
+        mini_app_section += f"📱 *{len(available_forums)} forum* siap untuk dikerjakan\n\n"
+        
+        # List available forums
+        for i, forum in enumerate(available_forums[:3], 1):
+            mini_app_section += f"*{i}.* {forum['course_name']}\n"
+            mini_app_section += f"   📚 Pertemuan {forum['meeting_number']}\n"
+            mini_app_section += f"   ✅ Status: Tersedia\n\n"
+        
+        mini_app_section += f"💡 *Cara penggunaan:*\n"
+        mini_app_section += f"• Klik tombol Mini App di bawah\n"
+        mini_app_section += f"• Ikuti panduan pengerjaan\n"
+        mini_app_section += f"• Selesaikan semua tugas\n"
+        mini_app_section += f"• Verifikasi completion\n\n"
+        mini_app_section += f"⚠️ *PENTING:* Login dulu di browser dengan akun Mentari Anda!"
+        
+        formatted_result += mini_app_section
     
-    return hasil + footer_addition
+    return formatted_result
 
 def extract_available_forums_from_result(result: str) -> list:
     """Extract available forums (🟡 Tersedia tapi belum bergabung) from scraping result"""
@@ -291,31 +306,51 @@ def extract_credentials(text: str):
     
     return username, password
 
-def split_message(text: str, max_length: int = 4096) -> list:
-    """Split long message into chunks that fit Telegram's limit"""
+def split_message(text: str, max_length: int = 4000) -> list:
+    """Split long messages into chunks that fit Telegram's limits with better formatting"""
     if len(text) <= max_length:
         return [text]
     
     chunks = []
     current_chunk = ""
     
-    lines = text.split('\n')
-    for line in lines:
-        if len(current_chunk) + len(line) + 1 <= max_length:
-            current_chunk += line + '\n'
-        else:
+    # Split by sections first (double newlines)
+    sections = text.split('\n\n')
+    
+    for section in sections:
+        # If adding this section would exceed limit
+        if len(current_chunk) + len(section) + 2 > max_length:
             if current_chunk:
                 chunks.append(current_chunk.rstrip())
-                current_chunk = line + '\n'
-            else:
-                # Single line too long, split it
-                chunks.append(line[:max_length])
-                current_chunk = line[max_length:] + '\n'
+                current_chunk = ""
+        
+        # If single section is too long, split by lines
+        if len(section) > max_length:
+            lines = section.split('\n')
+            for line in lines:
+                if len(current_chunk) + len(line) + 1 > max_length:
+                    if current_chunk:
+                        chunks.append(current_chunk.rstrip())
+                        current_chunk = ""
+                
+                current_chunk += line + "\n"
+        else:
+            current_chunk += section + "\n\n"
     
     if current_chunk:
         chunks.append(current_chunk.rstrip())
     
-    return chunks
+    # Ensure no chunk is empty and add continuation markers
+    final_chunks = []
+    for i, chunk in enumerate(chunks):
+        if chunk.strip():
+            if i > 0:
+                chunk = f"📄 *Lanjutan {i+1}*\n\n" + chunk
+            if i < len(chunks) - 1:
+                chunk += f"\n\n*➡️ Bersambung...*"
+            final_chunks.append(chunk)
+    
+    return final_chunks if final_chunks else [text[:max_length]]
 
 async def send_result_or_error(update, context, nim: str, password: str, scrape_function, processing_msg=None):
     """Send scraping result or error message with live updates - Original compatibility function"""

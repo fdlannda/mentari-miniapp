@@ -79,30 +79,101 @@ def index():
             <!-- Initial View -->
             <div id="initial-view">
                 <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center;">
-                    <p>🎯 Siap bergabung ke forum diskusi?</p>
-                    <p style="font-size: 14px; opacity: 0.8;">Bot akan otomatis join forum untuk Anda</p>
+                    <p>🎯 Siap mengerjakan forum diskusi?</p>
+                    <p style="font-size: 14px; opacity: 0.8;">Klik tombol di bawah untuk membuka forum</p>
                 </div>
-                <button class="btn" onclick="joinForum()">🚀 Bergabung ke Forum</button>
+                <button class="btn" onclick="openForumInstructions()">🚀 Buka Forum Diskusi</button>
             </div>
 
-            <!-- Loading View -->
-            <div id="loading-view" class="hidden">
+            <!-- Instructions View -->
+            <div id="instructions-view" class="hidden">
+                <div style="background: rgba(255, 193, 7, 0.2); border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <h3>📝 PENTING - Panduan Pengerjaan:</h3>
+                    <div style="text-align: left; margin-top: 10px;">
+                        <p><strong>🔐 SEBELUM MULAI:</strong></p>
+                        <p>• Anda harus sudah ter-login di browser dengan akun Mentari UNPAM Anda</p>
+                        <br>
+                        <p><strong>📚 TUGAS YANG HARUS DISELESAIKAN:</strong></p>
+                        <p>• Minimal <strong>2x reply</strong> pada forum diskusi</p>
+                        <p>• Selesaikan semua tugas lainnya jika ada</p>
+                        <p>• Kerjakan dari <strong>Pretest sampai Kuesioner</strong></p>
+                        <br>
+                        <p><strong>⚠️ CATATAN:</strong></p>
+                        <p>• Baca soal diskusi dengan teliti</p>
+                        <p>• Berikan jawaban yang berkualitas</p>
+                        <p>• Jangan lupa submit semua tugas</p>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="proceedToForum()">
+                    🌐 Saya Paham, Buka Forum
+                </button>
+                <button class="btn" style="background: #6c757d; margin-top: 5px;" onclick="goBack()">
+                    ← Kembali
+                </button>
+            </div>
+
+            <!-- Working View -->
+            <div id="working-view" class="hidden">
+                <div style="background: rgba(40, 167, 69, 0.2); border: 1px solid #28a745; color: #155724; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <h3>🔄 Status: Sedang Dikerjakan</h3>
+                    <p>Forum telah dibuka di browser baru.</p>
+                    <p><strong>Jangan tutup Mini App ini!</strong></p>
+                </div>
+                
+                <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                    <h4>� Checklist Tugas:</h4>
+                    <div style="text-align: left; margin-top: 10px;">
+                        <p>□ Login ke akun Mentari UNPAM</p>
+                        <p>□ Baca topik diskusi</p>
+                        <p>□ Reply diskusi (min. 2x)</p>
+                        <p>□ Kerjakan Pretest</p>
+                        <p>□ Selesaikan tugas lainnya</p>
+                        <p>□ Isi Kuesioner</p>
+                    </div>
+                </div>
+                
+                <button class="btn btn-warning" onclick="checkCompletion()">
+                    🔍 Cek Status Pengerjaan
+                </button>
+                <button class="btn btn-primary" style="margin-top: 5px;" onclick="openForumAgain()">
+                    🌐 Buka Forum Lagi
+                </button>
+            </div>
+
+            <!-- Checking View -->
+            <div id="checking-view" class="hidden">
                 <div style="text-align: center; padding: 20px;">
                     <div class="spinner"></div>
-                    <div id="loading-text">Memproses...</div>
+                    <div>🔍 Memeriksa status pengerjaan...</div>
+                    <div style="font-size: 14px; margin-top: 10px;">Mohon tunggu sebentar</div>
                 </div>
             </div>
 
             <!-- Success View -->
             <div id="success-view" class="hidden">
                 <div class="success-box">
-                    <h3>🎉 Berhasil!</h3>
-                    <p>✅ Anda sudah terdaftar dalam forum diskusi!</p>
-                    <p>📚 Partisipasi Anda telah tercatat</p>
-                    <p>💡 Silakan cek dashboard Mentari UNPAM Anda.</p>
+                    <h3>🎉 Semua Tugas Selesai!</h3>
+                    <p>✅ Forum diskusi: Completed</p>
+                    <p>✅ Reply minimal: Completed</p>
+                    <p>✅ Pretest-Kuesioner: Completed</p>
+                    <p>� Nilai akan muncul di dashboard Anda.</p>
                 </div>
-                <button class="btn btn-primary" onclick="openForum()">🌐 Buka Forum</button>
-                <button class="btn" onclick="closeApp()">✅ Selesai</button>
+                <button class="btn" onclick="closeAppAndReturn()">✅ Selesai & Kembali ke Bot</button>
+            </div>
+
+            <!-- Incomplete View -->
+            <div id="incomplete-view" class="hidden">
+                <div style="background: rgba(255, 193, 7, 0.2); border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <h3>⚠️ Tugas Belum Selesai</h3>
+                    <div id="incomplete-details"></div>
+                </div>
+                <button class="btn btn-primary" onclick="continueWorking()">
+                    📚 Lanjutkan Pengerjaan
+                </button>
+                <button class="btn btn-warning" style="margin-top: 5px;" onclick="checkCompletion()">
+                    🔍 Cek Lagi
+                </button>
             </div>
 
             <!-- Error View -->
@@ -137,18 +208,41 @@ def index():
             document.getElementById('meeting-number').textContent = 'Pertemuan ' + meetingNumber;
 
             function showView(viewId) {
-                ['initial-view', 'loading-view', 'success-view', 'error-view'].forEach(id => {
+                ['initial-view', 'instructions-view', 'working-view', 'checking-view', 'success-view', 'incomplete-view', 'error-view'].forEach(id => {
                     document.getElementById(id).classList.add('hidden');
                 });
                 document.getElementById(viewId).classList.remove('hidden');
             }
 
-            async function joinForum() {
-                showView('loading-view');
-                document.getElementById('loading-text').textContent = 'Bergabung ke forum...';
+            function openForumInstructions() {
+                showView('instructions-view');
+            }
+
+            function goBack() {
+                showView('initial-view');
+            }
+
+            function proceedToForum() {
+                // Open forum in new tab
+                const forumUrl = `https://mentari.unpam.ac.id/u-courses/${courseCode}?accord_pertemuan=PERTEMUAN_${meetingNumber}`;
+                window.open(forumUrl, '_blank');
+                
+                // Show working view
+                showView('working-view');
+                window.forumUrl = forumUrl;
+            }
+
+            function openForumAgain() {
+                if (window.forumUrl) {
+                    window.open(window.forumUrl, '_blank');
+                }
+            }
+
+            async function checkCompletion() {
+                showView('checking-view');
 
                 try {
-                    const response = await fetch('/api/join-forum', {
+                    const response = await fetch('/api/check-completion', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -160,23 +254,44 @@ def index():
 
                     const data = await response.json();
                     
-                    if (data.success) {
+                    if (data.completed) {
                         showView('success-view');
-                        window.forumUrl = data.forum_url || `https://mentari.unpam.ac.id/u-courses/${courseCode}?accord_pertemuan=PERTEMUAN_${meetingNumber}`;
                     } else {
-                        throw new Error(data.message || 'Gagal bergabung ke forum');
+                        // Show incomplete tasks
+                        document.getElementById('incomplete-details').innerHTML = data.missing_tasks || 
+                            '<p>• Masih ada tugas yang belum selesai</p><p>• Silakan periksa forum dan selesaikan semua tugas</p>';
+                        showView('incomplete-view');
                     }
                 } catch (error) {
                     document.getElementById('error-message').innerHTML = 
-                        '<h3>❌ Gagal Join Forum</h3><p>' + error.message + '</p>';
+                        '<h3>❌ Error Checking Status</h3><p>' + error.message + '</p>';
                     showView('error-view');
                 }
             }
 
-            function openForum() {
-                if (window.forumUrl) {
-                    window.open(window.forumUrl, '_blank');
+            function continueWorking() {
+                showView('working-view');
+            }
+
+            function closeAppAndReturn() {
+                // Send completion signal to bot
+                if (tg) {
+                    tg.sendData(JSON.stringify({
+                        action: 'completed',
+                        course_code: courseCode,
+                        meeting_number: meetingNumber
+                    }));
+                    tg.close();
                 }
+            }
+
+            // Legacy functions for error handling
+            async function joinForum() {
+                openForumInstructions();
+            }
+
+            function openForum() {
+                openForumAgain();
             }
 
             function resetApp() {
@@ -196,8 +311,55 @@ def forum_page():
     """Forum page with parameters"""
     return index()
 
-@app.route('/api/join-forum', methods=['POST'])
-def join_forum_api():
+@app.route('/api/check-completion', methods=['POST'])
+def check_completion_api():
+    """API endpoint for checking forum completion status"""
+    try:
+        data = request.get_json()
+        course_code = data.get('course_code', 'UNKNOWN')
+        course_title = data.get('course_title', 'Unknown Course')
+        meeting_number = data.get('meeting_number', '1')
+        
+        # Simulate checking completion status
+        time.sleep(2)  # Simulate checking time
+        
+        # Simulate various completion scenarios
+        completion_scenarios = [
+            {
+                'completed': True,
+                'message': 'Semua tugas telah diselesaikan'
+            },
+            {
+                'completed': False,
+                'missing_tasks': '''
+                <p><strong>Tugas yang belum selesai:</strong></p>
+                <p>• Forum diskusi: Perlu minimal 2 reply</p>
+                <p>• Kuesioner belum diisi</p>
+                '''
+            },
+            {
+                'completed': False,
+                'missing_tasks': '''
+                <p><strong>Tugas yang belum selesai:</strong></p>
+                <p>• Pretest belum dikerjakan</p>
+                <p>• Tugas tambahan belum diselesaikan</p>
+                '''
+            }
+        ]
+        
+        # Random selection for demo (70% incomplete, 30% complete)
+        if random.random() < 0.3:
+            scenario = completion_scenarios[0]  # Complete
+        else:
+            scenario = random.choice(completion_scenarios[1:])  # Incomplete
+        
+        return jsonify(scenario)
+            
+    except Exception as e:
+        return jsonify({
+            'completed': False,
+            'message': f'Error checking completion: {str(e)}'
+        }), 500
     """API endpoint for joining forum"""
     try:
         data = request.get_json()
