@@ -242,27 +242,47 @@ MINI_APP_HTML = """
             result.style.display = 'none';
             
             try {
-                // Simulate API call (replace with actual API when ready)
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Send join request to API
+                const response = await fetch('/api/join-forum', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        course_code: courseCode,
+                        meeting_number: meetingNumber,
+                        user_data: window.Telegram?.WebApp?.initDataUnsafe || {}
+                    })
+                });
                 
-                // Show success
+                const data = await response.json();
+                
                 loading.style.display = 'none';
                 result.style.display = 'block';
-                result.className = 'result success';
-                result.innerHTML = `
-                    <strong>✅ Berhasil bergabung!</strong><br>
-                    Forum: ${courseName}<br>
-                    Pertemuan: ${meetingNumber}<br>
-                    <br>
-                    Silakan cek dashboard Mentari UNPAM Anda.
-                `;
                 
-                // Close Mini App after 3 seconds
-                setTimeout(() => {
-                    if (window.Telegram && window.Telegram.WebApp) {
-                        window.Telegram.WebApp.close();
-                    }
-                }, 3000);
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <strong>✅ Berhasil bergabung!</strong><br>
+                        Forum: ${courseName}<br>
+                        Pertemuan: ${meetingNumber}<br>
+                        <br>
+                        <button onclick="window.open('${data.forum_url}', '_blank')" 
+                                style="background: #007AFF; color: white; border: none; 
+                                       padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                            🌐 Buka Forum
+                        </button>
+                    `;
+                    
+                    // Close Mini App after 5 seconds
+                    setTimeout(() => {
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.close();
+                        }
+                    }, 5000);
+                } else {
+                    throw new Error(data.message);
+                }
                 
             } catch (error) {
                 loading.style.display = 'none';
@@ -270,7 +290,13 @@ MINI_APP_HTML = """
                 result.className = 'result error';
                 result.innerHTML = `
                     <strong>❌ Gagal bergabung</strong><br>
-                    ${error.message || 'Terjadi kesalahan'}
+                    ${error.message || 'Terjadi kesalahan'}<br>
+                    <br>
+                    <button onclick="location.reload()" 
+                            style="background: #dc3545; color: white; border: none; 
+                                   padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        🔄 Coba Lagi
+                    </button>
                 `;
                 btn.style.display = 'block';
             }
@@ -289,6 +315,29 @@ def index():
 def forum_page():
     """Forum-specific Mini App page dengan parameter course"""
     return render_template_string(MINI_APP_HTML)
+
+@app.route('/api/join-forum', methods=['POST'])
+def join_forum_api():
+    """API endpoint untuk join forum melalui Mini App"""
+    try:
+        data = request.get_json()
+        course_code = data.get('course_code')
+        meeting_number = data.get('meeting_number')
+        user_data = data.get('user_data', {})
+        
+        # Untuk demo, return success
+        # Di production, ini akan call scraper service
+        return jsonify({
+            'success': True,
+            'message': f'Berhasil bergabung forum {course_code} pertemuan {meeting_number}',
+            'forum_url': f'https://mentari.unpam.ac.id/course/view.php?id={course_code}#section-{meeting_number}'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
 
 @app.route('/api/health')
 def health():
