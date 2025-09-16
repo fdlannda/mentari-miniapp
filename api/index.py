@@ -300,8 +300,8 @@ def health():
     })
 
 # Vercel handler - PENTING untuk Vercel!
-def handler(request):
-    return app(request.environ, lambda status, headers: None)
+# Export app sebagai handler default untuk Vercel
+app = app
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
