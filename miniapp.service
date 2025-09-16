@@ -1,0 +1,17 @@
+
+[Unit]
+Description=Mentari UNPAM Mini App Server
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/miniapp
+Environment=PATH=/var/www/miniapp/venv/bin
+Environment=FLASK_ENV=production
+ExecStart=/var/www/miniapp/venv/bin/python miniapp_server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

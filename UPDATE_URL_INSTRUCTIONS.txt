@@ -1,0 +1,9 @@
+# INSTRUKSI UPDATE URL SETELAH DEPLOY VERCEL
+# 
+# Setelah deploy selesai, ganti baris ini di helper.py:
+# miniapp_url = f"https://YOUR-VERCEL-URL.vercel.app/forum?course={forum['course_code']}&meeting={forum['meeting_number']}&name={forum['course_name'][:20].replace(' ', '%20')}"
+#
+# Dengan URL aktual Vercel Anda, contoh:
+# miniapp_url = f"https://mentari-miniapp-abc123.vercel.app/forum?course={forum['course_code']}&meeting={forum['meeting_number']}&name={forum['course_name'][:20].replace(' ', '%20')}"
+#
+# Simpan file dan restart bot Anda!

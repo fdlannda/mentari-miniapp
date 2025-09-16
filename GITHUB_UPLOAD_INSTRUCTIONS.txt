@@ -1,0 +1,13 @@
+# INSTRUKSI UPLOAD KE GITHUB
+# 
+# Jalankan command berikut di PowerShell (ganti YOUR-USERNAME dengan username GitHub Anda):
+#
+# git branch -M main
+# git remote add origin https://github.com/YOUR-USERNAME/mentari-miniapp.git
+# git push -u origin main
+#
+# Contoh jika username GitHub Anda adalah "john123":
+# git remote add origin https://github.com/john123/mentari-miniapp.git
+#
+# Setelah menjalankan, Anda akan diminta login GitHub (jika belum)
+# Masukkan username dan password/token GitHub Anda

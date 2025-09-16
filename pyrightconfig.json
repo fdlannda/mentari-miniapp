@@ -1,0 +1,39 @@
+{
+    "include": [
+        "src",
+        "scripts",
+        "main.py",
+        "helper.py"
+    ],
+    "exclude": [
+        "**/__pycache__",
+        "**/*.pyc"
+    ],
+    "defineConstant": {
+        "DEBUG": true
+    },
+    "stubPath": "typings",
+    "reportMissingImports": false,
+    "reportMissingTypeStubs": false,
+    "reportGeneralTypeIssues": false,
+    "reportOptionalSubscript": false,
+    "reportOptionalMemberAccess": false,
+    "reportOptionalCall": false,
+    "reportOptionalIterable": false,
+    "reportOptionalContextManager": false,
+    "reportOptionalOperand": false,
+    "reportTypedDictNotRequiredAccess": false,
+    "reportPrivateImportUsage": false,
+    "reportUnknownArgumentType": false,
+    "reportUnknownLambdaType": false,
+    "reportUnknownMemberType": false,
+    "reportUnknownParameterType": false,
+    "reportUnknownVariableType": false,
+    "reportUnnecessaryIsInstance": false,
+    "reportUnnecessaryComparison": false,
+    "reportConstantRedefinition": false,
+    "reportIncompatibleMethodOverride": false,
+    "reportIncompatibleVariableOverride": false,
+    "pythonVersion": "3.11",
+    "pythonPlatform": "Windows"
+}

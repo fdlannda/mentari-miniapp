@@ -1,0 +1,17 @@
+# Core dependencies
+python-telegram-bot==22.2
+httpx[http2]
+python-dotenv
+nest_asyncio
+playwright
+requests
+certifi
+aiofiles
+
+# Data handling
+dataclasses; python_version < "3.7"
+
+# Development dependencies (optional)
+black
+flake8
+mypy
