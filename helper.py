@@ -6,6 +6,7 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import ContextTypes
 from telegram.error import NetworkError, TelegramError
+from forum_tracker import get_user_completions, mark_forum_completed
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ def verify_forum_participation(course_code: str, meeting_number: str, forum_url:
             'message': f'Error during verification: {str(e)}'
         }
 
-def format_result_message(hasil: str, nim: str = None, available_forums: list = None) -> str:
+def format_result_message(hasil: str, nim: str = None, available_forums: list = None, forum_status_text: str = None) -> str:
     """Format the final result message with Mini App support - improved readability"""
     
     # Keep the original detailed format from hasil
@@ -136,13 +137,22 @@ def format_result_message(hasil: str, nim: str = None, available_forums: list = 
         mini_app_section = f"\n\n{'='*40}\n"
         mini_app_section += f"🚀 *MINI APP TERSEDIA!*\n"
         mini_app_section += f"{'='*40}\n\n"
-        mini_app_section += f"📱 *{len(available_forums)} forum* siap untuk dikerjakan\n\n"
+        
+        # Use custom status text if provided
+        if forum_status_text:
+            mini_app_section += f"{forum_status_text}\n\n"
+        else:
+            mini_app_section += f"📱 *{len(available_forums)} forum* siap untuk dikerjakan\n\n"
         
         # List available forums
         for i, forum in enumerate(available_forums[:3], 1):
             mini_app_section += f"*{i}.* {forum['course_name']}\n"
             mini_app_section += f"   📚 Pertemuan {forum['meeting_number']}\n"
             mini_app_section += f"   ✅ Status: Tersedia\n\n"
+        
+        # Show if there are more forums available
+        if len(available_forums) > 3:
+            mini_app_section += f"*...dan {len(available_forums) - 3} forum lainnya*\n\n"
         
         mini_app_section += f"💡 *Cara penggunaan:*\n"
         mini_app_section += f"• Klik tombol Mini App di bawah\n"
@@ -152,6 +162,16 @@ def format_result_message(hasil: str, nim: str = None, available_forums: list = 
         mini_app_section += f"⚠️ *PENTING:* Login dulu di browser dengan akun Mentari Anda!"
         
         formatted_result += mini_app_section
+    elif available_forums is not None and len(available_forums) == 0:
+        # All forums completed
+        completion_section = f"\n\n{'='*40}\n"
+        completion_section += f"🎉 *SEMUA FORUM SELESAI!*\n"
+        completion_section += f"{'='*40}\n\n"
+        completion_section += f"✅ Semua forum diskusi telah diselesaikan\n"
+        completion_section += f"📊 Status: Complete\n"
+        completion_section += f"💡 Silakan cek dashboard Mentari UNPAM Anda"
+        
+        formatted_result += completion_section
     
     return formatted_result
 
@@ -216,15 +236,39 @@ def extract_available_forums_from_result(result: str) -> list:
     
     return available_forums
 
-def create_miniapp_keyboard(available_forums: list, user_credentials=None, miniapp_generator=None) -> InlineKeyboardMarkup:
+def create_miniapp_keyboard(available_forums: list, user_credentials=None, completed_forums=None) -> InlineKeyboardMarkup:
     """Create inline keyboard dengan Web App buttons yang sebenarnya untuk forum yang available"""
     if not available_forums:
         return None
     
+    # Filter out completed forums
+    if completed_forums is None:
+        completed_forums = []
+    
+    # Create completed forum identifiers for comparison
+    completed_identifiers = set()
+    for completed in completed_forums:
+        identifier = f"{completed.get('course_name', '')}_M{completed.get('meeting_number', '')}"
+        completed_identifiers.add(identifier)
+    
+    # Filter available forums to exclude completed ones
+    pending_forums = []
+    for forum in available_forums:
+        forum_identifier = f"{forum.get('course_name', '')}_M{forum.get('meeting_number', '')}"
+        if forum_identifier not in completed_identifiers:
+            pending_forums.append(forum)
+    
+    # If no pending forums, show message
+    if not pending_forums:
+        return None
+    
     keyboard_buttons = []
     
-    # Add Web App buttons untuk setiap available forum (max 3 untuk tidak spam)
-    for forum in available_forums[:3]:
+    # Show up to 3 pending forums
+    display_forums = pending_forums[:3]
+    
+    # Add Web App buttons untuk setiap pending forum
+    for forum in display_forums:
         # Encode credentials ke Mini App URL (base64 for security)
         import base64
         import json
@@ -374,8 +418,49 @@ async def send_result_or_error(update, context, nim: str, password: str, scrape_
         # Extract available forums for Mini App
         available_forums = extract_available_forums_from_result(result)
         
-        # Format message with Mini App support
-        formatted_result = format_result_message(result, nim, available_forums)
+        # Get user's completed forums
+        user_completions = get_user_completions(nim)
+        
+        # Filter available forums to show only pending ones
+        pending_forums = []
+        for forum in available_forums:
+            # Create course code from mapping
+            course_code_mapping = {
+                'STATISTIKA DAN PROBABILITAS': '20251-03TPLK006-22TIF0093',
+                'STATISTIKA DAN PROB': '20251-03TPLK006-22TIF0093',
+                'SISTEM BERKAS': '20251-03TPLK007-22TIF0093',
+                'MATEMATIKA DISKRIT': '20251-03TPLK008-22TIF0093',
+                'JARINGAN KOMPUTER': '20251-03TPLK009-22TIF0093'
+            }
+            
+            actual_course_code = course_code_mapping.get(forum['course_name'], forum.get('course_code', ''))
+            
+            # Check if this forum is already completed
+            is_completed = any(
+                c.get('course_code') == actual_course_code and 
+                c.get('meeting_number') == str(forum['meeting_number']) and
+                c.get('status') == 'completed'
+                for c in user_completions
+            )
+            
+            if not is_completed:
+                pending_forums.append(forum)
+        
+        # Update forum count in message
+        total_available = len(available_forums)
+        pending_count = len(pending_forums)
+        completed_count = total_available - pending_count
+        
+        # Format message with dynamic forum info
+        if pending_count > 0:
+            forum_status_text = f"📱 *{pending_count} forum* siap untuk dikerjakan"
+            if completed_count > 0:
+                forum_status_text += f" ({completed_count} sudah selesai)"
+        else:
+            forum_status_text = f"🎉 *Semua {total_available} forum sudah selesai!*"
+        
+        # Format message with updated info
+        formatted_result = format_result_message(result, nim, pending_forums, forum_status_text)
         
         # Split message if too long
         message_chunks = split_message(formatted_result)
@@ -383,20 +468,20 @@ async def send_result_or_error(update, context, nim: str, password: str, scrape_
         # Prepare user credentials for Mini App
         user_credentials = {'nim': nim, 'password': password}
         
-        # Send final result with Mini App keyboard
+        # Send final result with Mini App keyboard (using pending_forums for display)
         if message_chunks:
             if processing_msg:
                 try:
                     await processing_msg.edit_text(
                         message_chunks[0], 
                         parse_mode='Markdown',
-                        reply_markup=create_miniapp_keyboard(available_forums, user_credentials) if available_forums else None
+                        reply_markup=create_miniapp_keyboard(pending_forums, user_credentials) if pending_forums else None
                     )
                 except Exception:
                     await update.message.reply_text(
                         message_chunks[0], 
                         parse_mode='Markdown',
-                        reply_markup=create_miniapp_keyboard(available_forums, user_credentials) if available_forums else None
+                        reply_markup=create_miniapp_keyboard(pending_forums, user_credentials) if pending_forums else None
                     )
             else:
                 await update.message.reply_text(

@@ -276,12 +276,26 @@ def index():
             function closeAppAndReturn() {
                 // Send completion signal to bot
                 if (tg) {
-                    tg.sendData(JSON.stringify({
-                        action: 'completed',
-                        course_code: courseCode,
-                        meeting_number: meetingNumber
-                    }));
-                    tg.close();
+                    // Mark as completed via API
+                    fetch('/api/mark-completed', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            course_code: courseCode,
+                            meeting_number: meetingNumber,
+                            nim: 'USER_NIM' // This should be passed from credentials
+                        })
+                    }).then(() => {
+                        tg.sendData(JSON.stringify({
+                            action: 'completed',
+                            course_code: courseCode,
+                            meeting_number: meetingNumber
+                        }));
+                        tg.close();
+                    }).catch(() => {
+                        // Fallback: close anyway
+                        tg.close();
+                    });
                 }
             }
 
@@ -311,7 +325,29 @@ def forum_page():
     """Forum page with parameters"""
     return index()
 
-@app.route('/api/check-completion', methods=['POST'])
+@app.route('/api/mark-completed', methods=['POST'])
+def mark_completed_api():
+    """API endpoint for marking forum as completed"""
+    try:
+        data = request.get_json()
+        nim = data.get('nim', 'UNKNOWN')
+        course_code = data.get('course_code', 'UNKNOWN')
+        meeting_number = data.get('meeting_number', '1')
+        
+        # For now, just simulate marking as completed
+        # In real implementation, this would save to database
+        
+        return jsonify({
+            'success': True,
+            'message': f'Forum {course_code} meeting {meeting_number} marked as completed for {nim}',
+            'timestamp': datetime.now().isoformat()
+        })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error marking completion: {str(e)}'
+        }), 500
 def check_completion_api():
     """API endpoint for checking forum completion status"""
     try:
