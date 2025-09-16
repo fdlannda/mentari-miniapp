@@ -21,12 +21,12 @@ def get_or_create_session(session_key):
         # Pretest → Forum Diskusi → Posttest → Kuesioner
         # Each step blocks the next until completed
         
-        # Determine completion status for each step (MORE REALISTIC percentages)
-        # Adjusted based on actual user completion patterns
-        pretest_done = (session_hash % 100) < 70     # 70% chance pretest done (more realistic)
-        forum_done = (session_hash % 100) < 45       # 45% chance forum done  
-        posttest_done = (session_hash % 100) < 25    # 25% chance posttest done
-        kuesioner_done = (session_hash % 100) < 15   # 15% chance kuesioner done
+        # Determine completion status for each step (REALISTIC percentages matching user scenario)
+        # Adjusted to be more accurate with actual user progress
+        pretest_done = (session_hash % 100) < 75     # 75% chance pretest done (user completed this)
+        forum_done = (session_hash % 100) < 20       # 20% chance forum done (user hasn't done this)
+        posttest_done = (session_hash % 100) < 10    # 10% chance posttest done (blocked by forum)
+        kuesioner_done = (session_hash % 100) < 5    # 5% chance kuesioner done (blocked by posttest)
         
         # SEQUENTIAL BLOCKING LOGIC
         # If pretest not done, block everything
