@@ -10,29 +10,86 @@ app = Flask(__name__)
 checking_sessions = {}
 
 def get_or_create_session(session_key):
-    """Get or create checking session untuk consistency"""
+    """Get or create checking session dengan SEQUENTIAL WORKFLOW MENTARI"""
     if session_key not in checking_sessions:
         import hashlib
         
         # Generate consistent completion state based on session key
         session_hash = int(hashlib.md5(session_key.encode()).hexdigest()[:8], 16)
         
-        # Very realistic: 95% incomplete rate
-        is_completed = (session_hash % 100) < 5  # Only 5% chance of completion
+        # MENTARI WORKFLOW SIMULATION:
+        # Pretest → Forum Diskusi → Posttest → Kuesioner
+        # Each step blocks the next until completed
         
-        # Select consistent scenario
-        scenarios = [
-            'Forum diskusi (perlu minimal 2 reply), Kuesioner belum diisi',
-            'Pretest belum dikerjakan, Tugas tambahan belum diselesaikan', 
-            'Forum diskusi belum ada reply, Video pembelajaran belum ditonton',
-            'Tugas mandiri belum dikumpulkan, Post-test belum dikerjakan'
-        ]
+        # Determine completion status for each step (realistic percentages)
+        pretest_done = (session_hash % 100) < 20     # 20% chance pretest done
+        forum_done = (session_hash % 100) < 15       # 15% chance forum done  
+        posttest_done = (session_hash % 100) < 10    # 10% chance posttest done
+        kuesioner_done = (session_hash % 100) < 5    # 5% chance kuesioner done
         
-        scenario_index = session_hash % len(scenarios)
+        # SEQUENTIAL BLOCKING LOGIC
+        # If pretest not done, block everything
+        if not pretest_done:
+            workflow_status = {
+                'pretest': False,
+                'forum_diskusi': False,  # Blocked by pretest
+                'posttest': False,       # Blocked by pretest  
+                'kuesioner': False,      # Blocked by pretest
+                'current_step': 'pretest',
+                'blocking_reason': 'Pretest belum dikerjakan - harus diselesaikan terlebih dahulu'
+            }
+        # If pretest done but forum not done
+        elif pretest_done and not forum_done:
+            workflow_status = {
+                'pretest': True,
+                'forum_diskusi': False,
+                'posttest': False,       # Blocked by forum
+                'kuesioner': False,      # Blocked by forum
+                'current_step': 'forum_diskusi',
+                'blocking_reason': 'Forum diskusi belum selesai - minimal 2 reply diperlukan'
+            }
+        # If pretest & forum done but posttest not done
+        elif pretest_done and forum_done and not posttest_done:
+            workflow_status = {
+                'pretest': True,
+                'forum_diskusi': True,
+                'posttest': False,
+                'kuesioner': False,      # Blocked by posttest
+                'current_step': 'posttest',
+                'blocking_reason': 'Posttest belum dikerjakan - selesaikan untuk lanjut ke kuesioner'
+            }
+        # If all done except kuesioner
+        elif pretest_done and forum_done and posttest_done and not kuesioner_done:
+            workflow_status = {
+                'pretest': True,
+                'forum_diskusi': True,
+                'posttest': True,
+                'kuesioner': False,
+                'current_step': 'kuesioner',
+                'blocking_reason': 'Kuesioner belum diisi - wajib diisi untuk absensi dan nilai'
+            }
+        # All completed
+        else:
+            workflow_status = {
+                'pretest': True,
+                'forum_diskusi': True,
+                'posttest': True,
+                'kuesioner': True,
+                'current_step': 'completed',
+                'blocking_reason': None
+            }
+        
+        # Check if ALL workflow completed
+        all_completed = all([
+            workflow_status['pretest'],
+            workflow_status['forum_diskusi'], 
+            workflow_status['posttest'],
+            workflow_status['kuesioner']
+        ])
         
         checking_sessions[session_key] = {
-            'completed': is_completed,
-            'missing_tasks': scenarios[scenario_index],
+            'completed': all_completed,
+            'workflow': workflow_status,
             'check_count': 0,
             'created_at': datetime.now()
         }
@@ -388,7 +445,7 @@ def mark_completed_api():
 
 @app.route('/api/check-completion', methods=['POST'])
 def check_completion_api():
-    """API endpoint for checking forum completion status - CONSISTENT & REALISTIC"""
+    """API endpoint dengan SEQUENTIAL WORKFLOW DETECTION sesuai Mentari UNPAM"""
     try:
         data = request.get_json()
         course_code = data.get('course_code', 'UNKNOWN')
@@ -398,27 +455,66 @@ def check_completion_api():
         # Create unique session identifier
         session_key = f"{course_code}_{meeting_number}"
         
-        # Get or create consistent session
+        # Get or create consistent session with workflow
         session = get_or_create_session(session_key)
         session['check_count'] += 1
         
         # Simulate realistic checking process
         time.sleep(2)  # Simulate checking time
         
-        # REALISTIC BEHAVIOR:
-        # Same forum will always give same result (consistent)
-        # 95% forums will be incomplete
-        # 5% forums might be complete
+        # Get workflow status
+        workflow = session['workflow']
         
         if session['completed']:
             return jsonify({
                 'completed': True,
-                'message': 'Semua tugas telah diselesaikan dengan sempurna!'
+                'message': '✅ Semua tahapan telah diselesaikan! Anda sudah terabsen.'
             })
         else:
+            # Generate detailed missing tasks based on workflow
+            current_step = workflow['current_step']
+            blocking_reason = workflow['blocking_reason']
+            
+            # Build detailed status message with better formatting
+            status_lines = []
+            
+            # Current blocking step (highlight)
+            status_lines.append(f"🔴 LANGKAH SELANJUTNYA: {blocking_reason}")
+            status_lines.append("")  # Empty line for spacing
+            
+            # Individual step status
+            if workflow['pretest']:
+                status_lines.append('✅ 1. Pretest: Sudah dikerjakan')
+            else:
+                status_lines.append('❌ 1. Pretest: Belum dikerjakan (HARUS DISELESAIKAN)')
+            
+            if workflow['forum_diskusi']:
+                status_lines.append('✅ 2. Forum Diskusi: Sudah selesai')
+            elif workflow['pretest']:
+                status_lines.append('❌ 2. Forum Diskusi: Belum ada reply (min 2 reply)')
+            else:
+                status_lines.append('🔒 2. Forum Diskusi: Terkunci')
+            
+            if workflow['posttest']:
+                status_lines.append('✅ 3. Posttest: Sudah dikerjakan')
+            elif workflow['forum_diskusi']:
+                status_lines.append('❌ 3. Posttest: Belum dikerjakan')
+            else:
+                status_lines.append('🔒 3. Posttest: Terkunci')
+                
+            if workflow['kuesioner']:
+                status_lines.append('✅ 4. Kuesioner: Sudah diisi')
+            elif workflow['posttest']:
+                status_lines.append('❌ 4. Kuesioner: Belum diisi (WAJIB UNTUK ABSENSI)')
+            else:
+                status_lines.append('🔒 4. Kuesioner: Terkunci')
+            
+            # Join with newlines for better readability
+            missing_tasks = ' '.join(status_lines)  # Use space instead of newline for compatibility
+            
             return jsonify({
                 'completed': False,
-                'missing_tasks': f"Tugas yang belum selesai: {session['missing_tasks']}"
+                'missing_tasks': missing_tasks
             })
             
     except Exception as e:
