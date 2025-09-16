@@ -144,15 +144,11 @@ def format_result_message(hasil: str, nim: str = None, available_forums: list = 
         else:
             mini_app_section += f"📱 *{len(available_forums)} forum* siap untuk dikerjakan\n\n"
         
-        # List available forums
-        for i, forum in enumerate(available_forums[:3], 1):
+        # List available forums (show all, not just 3)
+        for i, forum in enumerate(available_forums, 1):
             mini_app_section += f"*{i}.* {forum['course_name']}\n"
             mini_app_section += f"   📚 Pertemuan {forum['meeting_number']}\n"
             mini_app_section += f"   ✅ Status: Tersedia\n\n"
-        
-        # Show if there are more forums available
-        if len(available_forums) > 3:
-            mini_app_section += f"*...dan {len(available_forums) - 3} forum lainnya*\n\n"
         
         mini_app_section += f"💡 *Cara penggunaan:*\n"
         mini_app_section += f"• Klik tombol Mini App di bawah\n"
@@ -264,8 +260,8 @@ def create_miniapp_keyboard(available_forums: list, user_credentials=None, compl
     
     keyboard_buttons = []
     
-    # Show up to 3 pending forums
-    display_forums = pending_forums[:3]
+    # Show all pending forums (up to 6 for UI limits)
+    display_forums = pending_forums[:6]
     
     # Add Web App buttons untuk setiap pending forum
     for forum in display_forums:

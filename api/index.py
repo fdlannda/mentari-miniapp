@@ -257,14 +257,18 @@ def index():
                     if (data.completed) {
                         showView('success-view');
                     } else {
-                        // Show incomplete tasks
-                        document.getElementById('incomplete-details').innerHTML = data.missing_tasks || 
-                            '<p>• Masih ada tugas yang belum selesai</p><p>• Silakan periksa forum dan selesaikan semua tugas</p>';
+                        // Show incomplete tasks with safe text handling
+                        const missingTasks = data.missing_tasks || data.message || 
+                            'Masih ada tugas yang belum selesai. Silakan periksa forum dan selesaikan semua tugas.';
+                        
+                        // Safely display text without HTML parsing issues
+                        document.getElementById('incomplete-details').textContent = missingTasks;
                         showView('incomplete-view');
                     }
                 } catch (error) {
+                    console.error('Check completion error:', error);
                     document.getElementById('error-message').innerHTML = 
-                        '<h3>❌ Error Checking Status</h3><p>' + error.message + '</p>';
+                        '<h3>❌ Error Checking Status</h3><p>Terjadi kesalahan saat mengecek status. Silakan coba lagi.</p>';
                     showView('error-view');
                 }
             }
@@ -348,6 +352,8 @@ def mark_completed_api():
             'success': False,
             'message': f'Error marking completion: {str(e)}'
         }), 500
+
+@app.route('/api/check-completion', methods=['POST'])
 def check_completion_api():
     """API endpoint for checking forum completion status"""
     try:
@@ -367,19 +373,11 @@ def check_completion_api():
             },
             {
                 'completed': False,
-                'missing_tasks': '''
-                <p><strong>Tugas yang belum selesai:</strong></p>
-                <p>• Forum diskusi: Perlu minimal 2 reply</p>
-                <p>• Kuesioner belum diisi</p>
-                '''
+                'missing_tasks': 'Tugas yang belum selesai: Forum diskusi (perlu minimal 2 reply), Kuesioner belum diisi'
             },
             {
                 'completed': False,
-                'missing_tasks': '''
-                <p><strong>Tugas yang belum selesai:</strong></p>
-                <p>• Pretest belum dikerjakan</p>
-                <p>• Tugas tambahan belum diselesaikan</p>
-                '''
+                'missing_tasks': 'Tugas yang belum selesai: Pretest belum dikerjakan, Tugas tambahan belum diselesaikan'
             }
         ]
         
@@ -396,6 +394,9 @@ def check_completion_api():
             'completed': False,
             'message': f'Error checking completion: {str(e)}'
         }), 500
+
+@app.route('/api/join-forum', methods=['POST'])
+def join_forum_api():
     """API endpoint for joining forum"""
     try:
         data = request.get_json()
