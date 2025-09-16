@@ -325,12 +325,15 @@ def join_forum_api():
         meeting_number = data.get('meeting_number')
         user_data = data.get('user_data', {})
         
+        # Format URL forum yang benar: u-courses dengan accord_pertemuan
+        forum_url = f'https://mentari.unpam.ac.id/u-courses/{course_code}?accord_pertemuan=PERTEMUAN_{meeting_number}'
+        
         # Untuk demo, return success
-        # Di production, ini akan call scraper service
+        # Di production, ini akan call scraper service untuk benar-benar join forum
         return jsonify({
             'success': True,
             'message': f'Berhasil bergabung forum {course_code} pertemuan {meeting_number}',
-            'forum_url': f'https://mentari.unpam.ac.id/course/view.php?id={course_code}#section-{meeting_number}'
+            'forum_url': forum_url
         })
         
     except Exception as e:
