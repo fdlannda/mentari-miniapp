@@ -122,8 +122,14 @@ def index():
             // Get URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const courseCode = urlParams.get('course_code') || 'UNKNOWN-CODE';
-            const courseTitle = urlParams.get('course_title') || 'Course Title';
+            const courseTitle = decodeURIComponent(urlParams.get('course_title') || 'Course Title');
             const meetingNumber = urlParams.get('meeting_number') || '1';
+            
+            // Debug: Log parameters
+            console.log('URL Parameters:', {
+                courseCode, courseTitle, meetingNumber,
+                fullURL: window.location.href
+            });
             
             // Update UI with course info
             document.getElementById('course-code').textContent = courseCode;

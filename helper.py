@@ -240,7 +240,7 @@ def create_miniapp_keyboard(available_forums: list, user_credentials=None, minia
         )
         
         # Create Mini App URL dengan parameter forum dan credentials
-        miniapp_url = f"https://mentari-miniapp.vercel.app/forum?course={actual_course_code}&meeting={forum['meeting_number']}&name={forum['course_name'][:20].replace(' ', '%20')}&creds={encoded_creds}"
+        miniapp_url = f"https://mentari-miniapp.vercel.app/forum?course_code={actual_course_code}&course_title={forum['course_name'][:30].replace(' ', '%20')}&meeting_number={forum['meeting_number']}&creds={encoded_creds}"
         
         # Create Web App button yang akan membuka Mini App
         button = InlineKeyboardButton(
