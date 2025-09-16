@@ -278,7 +278,17 @@ def extract_available_forums_from_result(result: str) -> list:
     
     # FALLBACK: If no individual forums found but status summary indicates available forums,
     # create dummy forums for all courses
-    if len(available_forums) == 0 and 'status_match' in locals() and status_match:
+    status_available = False
+    if 'status_match' in locals() and status_match:
+        status_available = True
+        print(f"DEBUG: Status match found - {status_match.group(1)} forums available")
+    
+    # Also check for general availability patterns
+    if '🟡 Tersedia belum gabung:' in result or 'Tersedia belum gabung' in result:
+        status_available = True
+        print(f"DEBUG: General availability pattern found")
+    
+    if len(available_forums) == 0 and status_available:
         print(f"DEBUG: Using fallback logic - creating forums for all courses")
         # Create forums for all known courses (assuming meeting 2 as default)
         course_map = {
@@ -491,6 +501,13 @@ async def send_result_or_error(update, context, nim: str, password: str, scrape_
     try:
         # Execute scraping with live progress callback
         result = await scrape_function(nim, password, progress_callback)
+        
+        # DEBUG: Check result content
+        print(f"DEBUG SCRAPING RESULT:")
+        print(f"  Result length: {len(result) if result else 0} chars")
+        print(f"  Contains '🟡 Tersedia belum gabung': {'🟡 Tersedia belum gabung' in result if result else False}")
+        print(f"  Contains 'SEMUA FORUM SELESAI': {'SEMUA FORUM SELESAI' in result if result else False}")
+        print("="*30)
         
         # Extract available forums for Mini App
         available_forums = extract_available_forums_from_result(result)
