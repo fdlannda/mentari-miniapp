@@ -352,8 +352,10 @@ def index():
                         const missingTasks = data.missing_tasks || data.message || 
                             'Masih ada tugas yang belum selesai. Silakan periksa forum dan selesaikan semua tugas.';
                         
-                        // Safely display text without HTML parsing issues
-                        document.getElementById('incomplete-details').textContent = missingTasks;
+                        // Safely display text with proper line breaks
+                        const detailsElement = document.getElementById('incomplete-details');
+                        detailsElement.style.whiteSpace = 'pre-line';
+                        detailsElement.textContent = missingTasks;
                         showView('incomplete-view');
                     }
                 } catch (error) {
@@ -519,8 +521,8 @@ def check_completion_api():
                 status_lines.append('🔒 4. Kuesioner: Terkunci')
                 status_lines.append('   → Selesaikan Posttest dulu')
             
-            # Join with spaces to work with Mini App display (will be formatted by frontend)
-            missing_tasks = ' '.join(status_lines)
+            # Join with newlines for proper vertical display
+            missing_tasks = '\n'.join(status_lines)
             
             return jsonify({
                 'completed': False,
