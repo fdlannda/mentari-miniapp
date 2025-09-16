@@ -211,12 +211,12 @@ def extract_available_forums_from_result(result: str) -> list:
                         
                         # Use extracted course code or fallback to mapping
                         if not current_course_code and current_course:
-                            # Fallback course code mapping based on course name
+                            # Fallback course code mapping based on course name - FIXED
                             course_map = {
                                 'STATISTIKA DAN PROBABILITAS': '20251-03TPLK006-22TIF0093',
-                                'SISTEM BERKAS': '20251-03TPLK007-22TIF0093', 
-                                'MATEMATIKA DISKRIT': '20251-03TPLK008-22TIF0093',
-                                'JARINGAN KOMPUTER': '20251-03TPLK009-22TIF0093'
+                                'SISTEM BERKAS': '20251-03TPLK006-22TIF0152', 
+                                'MATEMATIKA DISKRIT': '20251-03TPLK006-22TIF0142',
+                                'JARINGAN KOMPUTER': '20251-03TPLK006-22TIF0133'
                             }
                             current_course_code = course_map.get(current_course, '20251-03TPLK006-22TIF0093')
                         
@@ -278,14 +278,14 @@ def create_miniapp_keyboard(available_forums: list, user_credentials=None, compl
         else:
             encoded_creds = ''
         
-        # QUICK FIX: Hardcode course code mapping for demo
-        # In production, this should be extracted from actual scraping result
+        # FIXED: Course code mapping sesuai dengan courses.json
+        # Updated untuk match dengan data real dari courses.json
         course_code_mapping = {
             'STATISTIKA DAN PROBABILITAS': '20251-03TPLK006-22TIF0093',
             'STATISTIKA DAN PROB': '20251-03TPLK006-22TIF0093',
-            'SISTEM BERKAS': '20251-03TPLK007-22TIF0093',
-            'MATEMATIKA DISKRIT': '20251-03TPLK008-22TIF0093',
-            'JARINGAN KOMPUTER': '20251-03TPLK009-22TIF0093'
+            'SISTEM BERKAS': '20251-03TPLK006-22TIF0152',
+            'MATEMATIKA DISKRIT': '20251-03TPLK006-22TIF0142',
+            'JARINGAN KOMPUTER': '20251-03TPLK006-22TIF0133'
         }
         
         # Get actual course code from mapping
@@ -424,13 +424,13 @@ async def send_result_or_error(update, context, nim: str, password: str, scrape_
         # Filter available forums to show only pending ones
         pending_forums = []
         for forum in available_forums:
-            # Create course code from mapping
+            # Create course code from mapping - FIXED to match courses.json
             course_code_mapping = {
                 'STATISTIKA DAN PROBABILITAS': '20251-03TPLK006-22TIF0093',
                 'STATISTIKA DAN PROB': '20251-03TPLK006-22TIF0093',
-                'SISTEM BERKAS': '20251-03TPLK007-22TIF0093',
-                'MATEMATIKA DISKRIT': '20251-03TPLK008-22TIF0093',
-                'JARINGAN KOMPUTER': '20251-03TPLK009-22TIF0093'
+                'SISTEM BERKAS': '20251-03TPLK006-22TIF0152',
+                'MATEMATIKA DISKRIT': '20251-03TPLK006-22TIF0142',
+                'JARINGAN KOMPUTER': '20251-03TPLK006-22TIF0133'
             }
             
             actual_course_code = course_code_mapping.get(forum['course_name'], forum.get('course_code', ''))
