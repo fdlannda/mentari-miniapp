@@ -287,7 +287,7 @@ MINI_APP_HTML = """
                     result.className = 'result success';
                     
                     if (data.next_action === 'show_success_in_miniapp') {
-                        // Stay in Mini App, show success message
+                        // Stay in Mini App, show success message with options
                         result.innerHTML = `
                             <strong>✅ Berhasil bergabung!</strong><br>
                             Forum: ${courseName}<br>
@@ -298,6 +298,11 @@ MINI_APP_HTML = """
                                 💡 Silakan cek dashboard Mentari UNPAM Anda.
                             </div>
                             <br>
+                            <button onclick="window.open('${data.forum_url}', '_blank')" 
+                                    style="background: #007AFF; color: white; border: none; 
+                                           padding: 12px 24px; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 8px;">
+                                🌐 Buka Forum Sekarang
+                            </button>
                             <button onclick="if(window.Telegram?.WebApp) window.Telegram.WebApp.close();" 
                                     style="background: #28a745; color: white; border: none; 
                                            padding: 12px 24px; border-radius: 8px; cursor: pointer; width: 100%;">
