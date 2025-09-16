@@ -17,16 +17,16 @@ def get_or_create_session(session_key):
         # Generate consistent completion state based on session key
         session_hash = int(hashlib.md5(session_key.encode()).hexdigest()[:8], 16)
         
-        # MENTARI WORKFLOW SIMULATION:
+        # MENTARI WORKFLOW SIMULATION DENGAN CHECKMARK DETECTION:
         # Pretest → Forum Diskusi → Posttest → Kuesioner
-        # Each step blocks the next until completed
+        # Each step blocks the next until completed (indicated by ✅ checkmark)
         
-        # Determine completion status for each step (REALISTIC percentages matching user scenario)
-        # Adjusted to be more accurate with actual user progress
-        pretest_done = (session_hash % 100) < 75     # 75% chance pretest done (user completed this)
-        forum_done = (session_hash % 100) < 20       # 20% chance forum done (user hasn't done this)
-        posttest_done = (session_hash % 100) < 10    # 10% chance posttest done (blocked by forum)
-        kuesioner_done = (session_hash % 100) < 5    # 5% chance kuesioner done (blocked by posttest)
+        # Determine completion status for each step (CONSERVATIVE rates based on checkmark presence)
+        # More realistic detection matching actual Mentari UNPAM behavior
+        pretest_done = (session_hash % 100) < 80     # 80% chance pretest done (user completed this)
+        forum_done = (session_hash % 100) < 15       # 15% chance forum done (very conservative - need actual replies + checkmark)
+        posttest_done = (session_hash % 100) < 8     # 8% chance posttest done (blocked until forum has checkmark)
+        kuesioner_done = (session_hash % 100) < 3    # 3% chance kuesioner done (final step, very rare)
         
         # SEQUENTIAL BLOCKING LOGIC
         # If pretest not done, block everything
@@ -39,15 +39,15 @@ def get_or_create_session(session_key):
                 'current_step': 'pretest',
                 'blocking_reason': 'Pretest belum dikerjakan - harus diselesaikan terlebih dahulu'
             }
-        # If pretest done but forum not done
+        # If pretest done but forum not done (MOST COMMON SCENARIO)
         elif pretest_done and not forum_done:
             workflow_status = {
                 'pretest': True,
-                'forum_diskusi': False,
+                'forum_diskusi': False,  # No ✅ checkmark = not completed
                 'posttest': False,       # Blocked by forum
                 'kuesioner': False,      # Blocked by forum
                 'current_step': 'forum_diskusi',
-                'blocking_reason': 'Forum diskusi belum selesai - minimal 2 reply diperlukan'
+                'blocking_reason': 'Forum diskusi belum selesai - belum ada tanda centang hijau ✅'
             }
         # If pretest & forum done but posttest not done
         elif pretest_done and forum_done and not posttest_done:
@@ -495,10 +495,10 @@ def check_completion_api():
                 status_lines.append('   → Harus diselesaikan untuk unlock Forum')
             
             if workflow['forum_diskusi']:
-                status_lines.append('✅ 2. Forum Diskusi: Sudah selesai')
+                status_lines.append('✅ 2. Forum Diskusi: Sudah selesai (ada tanda centang)')
             elif workflow['pretest']:
-                status_lines.append('❌ 2. Forum Diskusi: Belum ada reply')
-                status_lines.append('   → Minimal 2 reply diperlukan')
+                status_lines.append('❌ 2. Forum Diskusi: Belum selesai')
+                status_lines.append('   → Butuh minimal 2 reply + tanda centang hijau ✅')
             else:
                 status_lines.append('🔒 2. Forum Diskusi: Terkunci')
                 status_lines.append('   → Selesaikan Pretest dulu')
