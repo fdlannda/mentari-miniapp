@@ -218,12 +218,22 @@ def extract_available_forums_from_result(result: str) -> list:
                                 'MATEMATIKA DISKRIT': '20251-03TPLK006-22TIF0142',
                                 'JARINGAN KOMPUTER': '20251-03TPLK006-22TIF0133'
                             }
-                            current_course_code = course_map.get(current_course, '20251-03TPLK006-22TIF0093')
+                            current_course_code = course_map.get(current_course, course_map.get('STATISTIKA DAN PROBABILITAS', '20251-03TPLK006-22TIF0093'))
                         
                         if current_course:
+                            # Always use course_code from mapping to ensure consistency
+                            course_map = {
+                                'STATISTIKA DAN PROBABILITAS': '20251-03TPLK006-22TIF0093',
+                                'SISTEM BERKAS': '20251-03TPLK006-22TIF0152', 
+                                'MATEMATIKA DISKRIT': '20251-03TPLK006-22TIF0142',
+                                'JARINGAN KOMPUTER': '20251-03TPLK006-22TIF0133'
+                            }
+                            # Always prioritize mapping over extracted code
+                            final_course_code = course_map.get(current_course, current_course_code or 'UNKNOWN-CODE')
+                            
                             available_forums.append({
                                 'course_name': current_course,
-                                'course_code': current_course_code or '20251-03TPLK006-22TIF0093',
+                                'course_code': final_course_code,
                                 'meeting_number': meeting_number,
                                 'status': 'available'
                             })
