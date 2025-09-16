@@ -6,6 +6,39 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+# Session tracking untuk konsistensi pengecekan
+checking_sessions = {}
+
+def get_or_create_session(session_key):
+    """Get or create checking session untuk consistency"""
+    if session_key not in checking_sessions:
+        import hashlib
+        
+        # Generate consistent completion state based on session key
+        session_hash = int(hashlib.md5(session_key.encode()).hexdigest()[:8], 16)
+        
+        # Very realistic: 95% incomplete rate
+        is_completed = (session_hash % 100) < 5  # Only 5% chance of completion
+        
+        # Select consistent scenario
+        scenarios = [
+            'Forum diskusi (perlu minimal 2 reply), Kuesioner belum diisi',
+            'Pretest belum dikerjakan, Tugas tambahan belum diselesaikan', 
+            'Forum diskusi belum ada reply, Video pembelajaran belum ditonton',
+            'Tugas mandiri belum dikumpulkan, Post-test belum dikerjakan'
+        ]
+        
+        scenario_index = session_hash % len(scenarios)
+        
+        checking_sessions[session_key] = {
+            'completed': is_completed,
+            'missing_tasks': scenarios[scenario_index],
+            'check_count': 0,
+            'created_at': datetime.now()
+        }
+    
+    return checking_sessions[session_key]
+
 @app.route('/')
 def index():
     return '''
@@ -355,39 +388,38 @@ def mark_completed_api():
 
 @app.route('/api/check-completion', methods=['POST'])
 def check_completion_api():
-    """API endpoint for checking forum completion status"""
+    """API endpoint for checking forum completion status - CONSISTENT & REALISTIC"""
     try:
         data = request.get_json()
         course_code = data.get('course_code', 'UNKNOWN')
         course_title = data.get('course_title', 'Unknown Course')
         meeting_number = data.get('meeting_number', '1')
         
-        # Simulate checking completion status
+        # Create unique session identifier
+        session_key = f"{course_code}_{meeting_number}"
+        
+        # Get or create consistent session
+        session = get_or_create_session(session_key)
+        session['check_count'] += 1
+        
+        # Simulate realistic checking process
         time.sleep(2)  # Simulate checking time
         
-        # Simulate various completion scenarios
-        completion_scenarios = [
-            {
+        # REALISTIC BEHAVIOR:
+        # Same forum will always give same result (consistent)
+        # 95% forums will be incomplete
+        # 5% forums might be complete
+        
+        if session['completed']:
+            return jsonify({
                 'completed': True,
-                'message': 'Semua tugas telah diselesaikan'
-            },
-            {
-                'completed': False,
-                'missing_tasks': 'Tugas yang belum selesai: Forum diskusi (perlu minimal 2 reply), Kuesioner belum diisi'
-            },
-            {
-                'completed': False,
-                'missing_tasks': 'Tugas yang belum selesai: Pretest belum dikerjakan, Tugas tambahan belum diselesaikan'
-            }
-        ]
-        
-        # Random selection for demo (70% incomplete, 30% complete)
-        if random.random() < 0.3:
-            scenario = completion_scenarios[0]  # Complete
+                'message': 'Semua tugas telah diselesaikan dengan sempurna!'
+            })
         else:
-            scenario = random.choice(completion_scenarios[1:])  # Incomplete
-        
-        return jsonify(scenario)
+            return jsonify({
+                'completed': False,
+                'missing_tasks': f"Tugas yang belum selesai: {session['missing_tasks']}"
+            })
             
     except Exception as e:
         return jsonify({
