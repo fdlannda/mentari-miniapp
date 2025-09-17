@@ -264,6 +264,8 @@ def extract_available_forums_from_result(result: str) -> list:
         # Detect course name (📚 Course Name)
         if line.startswith('📚 '):
             current_course = line.replace('📚 ', '').strip()
+            # Remove Markdown formatting (asterisks) from course name
+            current_course = current_course.strip('*').strip()
             current_course_code = None
         
         # Try to extract course code from URL patterns in the result
@@ -297,6 +299,9 @@ def extract_available_forums_from_result(result: str) -> list:
                             # Always prioritize mapping over any extracted code
                             final_course_code = course_map.get(current_course)
                             
+                            # DEBUG: Log course mapping lookup
+                            print(f"DEBUG: Course mapping lookup: '{current_course}' -> '{final_course_code}'")
+                            
                             # Only add if we have a valid mapping AND meeting number is in JSON
                             if final_course_code:
                                 # Validate meeting number against JSON data
@@ -310,6 +315,7 @@ def extract_available_forums_from_result(result: str) -> list:
                                 
                                 # Only add if meeting number is valid according to JSON
                                 if valid_meeting:
+                                    print(f"DEBUG: Adding forum: {current_course} - Meeting {meeting_number}")
                                     available_forums.append({
                                         'course_name': current_course,
                                         'course_code': final_course_code,
@@ -318,6 +324,9 @@ def extract_available_forums_from_result(result: str) -> list:
                                     })
                                 else:
                                     print(f"DEBUG: Ignoring meeting {meeting_number} for {current_course} - not in JSON meetings")
+                            else:
+                                print(f"DEBUG: No course code mapping found for '{current_course}'")
+                                print(f"DEBUG: Available mappings: {list(course_map.keys())}")
                 except (ValueError, AttributeError):
                     continue
     
