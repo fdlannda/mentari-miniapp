@@ -254,25 +254,25 @@ class CourseConfiguration:
             return courses
             
         except Exception as e:
-            # Fallback to JSON-compatible hardcoded data
+            # Fallback to match exactly with courses.json data
             return [
                 CourseInfo(
                     code="20251-03TPLK006-22TIF0093",
-                    name="TEKNOLOGI PEMBELAJARAN KOMPUTER",
-                    meetings=[1, 2, 3]
-                ),
-                CourseInfo(
-                    code="20251-03STAT015-22TIF0093",
                     name="STATISTIKA DAN PROBABILITAS",
                     meetings=[1, 2, 3]
                 ),
                 CourseInfo(
-                    code="20251-03ALGO002-22TIF0093",
-                    name="ANALISIS DAN PERANCANGAN ALGORITMA",
+                    code="20251-03TPLK006-22TIF0152",
+                    name="SISTEM BERKAS",
                     meetings=[1, 2, 3]
                 ),
                 CourseInfo(
-                    code="20251-03JKOM003-22TIF0093",
+                    code="20251-03TPLK006-22TIF0142",
+                    name="MATEMATIKA DISKRIT",
+                    meetings=[1, 2, 3]
+                ),
+                CourseInfo(
+                    code="20251-03TPLK006-22TIF0133",
                     name="JARINGAN KOMPUTER",
                     meetings=[1, 2, 3]
                 )

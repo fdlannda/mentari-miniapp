@@ -19,12 +19,12 @@ def load_courses_data():
             return json.load(file)
     except Exception as e:
         logger.error(f"Error loading courses data: {e}")
-        # Fallback to hardcoded data
+        # Fallback to match exactly with courses.json data
         return [
-            {"code": "20251-03TPLK006-22TIF0093", "name": "TEKNOLOGI PEMBELAJARAN KOMPUTER", "meetings": [1, 2, 3]},
-            {"code": "20251-03STAT015-22TIF0093", "name": "STATISTIKA DAN PROBABILITAS", "meetings": [1, 2, 3]},
-            {"code": "20251-03ALGO002-22TIF0093", "name": "ANALISIS DAN PERANCANGAN ALGORITMA", "meetings": [1, 2, 3]},
-            {"code": "20251-03JKOM003-22TIF0093", "name": "JARINGAN KOMPUTER", "meetings": [1, 2, 3]}
+            {"code": "20251-03TPLK006-22TIF0093", "name": "STATISTIKA DAN PROBABILITAS", "meetings": [1, 2, 3]},
+            {"code": "20251-03TPLK006-22TIF0152", "name": "SISTEM BERKAS", "meetings": [1, 2, 3]},
+            {"code": "20251-03TPLK006-22TIF0142", "name": "MATEMATIKA DISKRIT", "meetings": [1, 2, 3]},
+            {"code": "20251-03TPLK006-22TIF0133", "name": "JARINGAN KOMPUTER", "meetings": [1, 2, 3]}
         ]
 
 def load_courses_mapping():
@@ -322,38 +322,11 @@ def extract_available_forums_from_result(result: str) -> list:
                     continue
     
     # DEBUG: Log what was found
-    print(f"DEBUG: Found {len(available_forums)} individual forums")
+    print(f"DEBUG: Found {len(available_forums)} individual forums from parsing")
     
-    # FALLBACK: If no individual forums found but status summary indicates available forums,
-    # create dummy forums for all courses
-    status_available = False
-    if 'status_match' in locals() and status_match:
-        status_available = True
-        print(f"DEBUG: Status match found - {status_match.group(1)} forums available")
-    
-    # Also check for general availability patterns
-    if '🟡 Tersedia belum gabung:' in result or 'Tersedia belum gabung' in result:
-        status_available = True
-        print(f"DEBUG: General availability pattern found")
-    
-    if len(available_forums) == 0 and status_available:
-        print(f"DEBUG: Using fallback logic - creating forums for all courses")
-        # Create forums for all known courses using meetings from JSON
-        courses_data = load_courses_data()
-        
-        for course in courses_data:
-            course_name = course['name']
-            course_code = course['code']
-            
-            # Create a forum entry for each meeting defined in JSON
-            for meeting_number in course['meetings']:
-                available_forums.append({
-                    'course_name': course_name,
-                    'course_code': course_code,
-                    'meeting_number': meeting_number,
-                    'status': 'available'
-                })
-        print(f"DEBUG: Created {len(available_forums)} fallback forums using JSON meetings")
+    # NO FALLBACK LOGIC - Only show forums that are actually available from scraping
+    # Fallback was creating false positives by showing all forums as available
+    # even when scraping shows them as ❌ or ❔
     
     return available_forums
 
