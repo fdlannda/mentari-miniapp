@@ -233,29 +233,50 @@ class CourseConfiguration:
     
     @staticmethod
     def get_default_courses() -> List[CourseInfo]:
-        """Mata kuliah default untuk scraping"""
-        return [
-            CourseInfo(
-                code="20251-03TPLK006-22TIF0093",
-                name="STATISTIKA DAN PROBABILITAS",
-                meetings=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-            ),
-            CourseInfo(
-                code="20251-03TPLK006-22TIF0152",
-                name="SISTEM BERKAS",
-                meetings=[1, 2, 3, 4, 5, 6, 7]
-            ),
-            CourseInfo(
-                code="20251-03TPLK006-22TIF0142",
-                name="MATEMATIKA DISKRIT",
-                meetings=[1, 2, 3, 4, 5, 6, 7]
-            ),
-            CourseInfo(
-                code="20251-03TPLK006-22TIF0133",
-                name="JARINGAN KOMPUTER",
-                meetings=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-            )
-        ]
+        """Mata kuliah default untuk scraping - loaded from JSON"""
+        import json
+        import os
+        
+        try:
+            # Load courses from JSON file
+            json_file = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'courses.json')
+            with open(json_file, 'r', encoding='utf-8') as file:
+                courses_data = json.load(file)
+            
+            courses = []
+            for course_data in courses_data:
+                courses.append(CourseInfo(
+                    code=course_data['code'],
+                    name=course_data['name'],
+                    meetings=course_data['meetings']
+                ))
+            
+            return courses
+            
+        except Exception as e:
+            # Fallback to JSON-compatible hardcoded data
+            return [
+                CourseInfo(
+                    code="20251-03TPLK006-22TIF0093",
+                    name="TEKNOLOGI PEMBELAJARAN KOMPUTER",
+                    meetings=[1, 2, 3]
+                ),
+                CourseInfo(
+                    code="20251-03STAT015-22TIF0093",
+                    name="STATISTIKA DAN PROBABILITAS",
+                    meetings=[1, 2, 3]
+                ),
+                CourseInfo(
+                    code="20251-03ALGO002-22TIF0093",
+                    name="ANALISIS DAN PERANCANGAN ALGORITMA",
+                    meetings=[1, 2, 3]
+                ),
+                CourseInfo(
+                    code="20251-03JKOM003-22TIF0093",
+                    name="JARINGAN KOMPUTER",
+                    meetings=[1, 2, 3]
+                )
+            ]
     
     @staticmethod
     def load_from_file(file_path: str) -> List[CourseInfo]:
