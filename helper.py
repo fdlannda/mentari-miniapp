@@ -11,6 +11,22 @@ from forum_tracker import get_user_completions
 
 logger = logging.getLogger(__name__)
 
+def load_courses_data():
+    """Load courses data from JSON file."""
+    try:
+        courses_file = os.path.join(os.path.dirname(__file__), 'data', 'courses.json')
+        with open(courses_file, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    except Exception as e:
+        logger.error(f"Error loading courses data: {e}")
+        # Fallback to hardcoded data
+        return [
+            {"code": "20251-03TPLK006-22TIF0093", "name": "TEKNOLOGI PEMBELAJARAN KOMPUTER", "meetings": [1, 2, 3]},
+            {"code": "20251-03STAT015-22TIF0093", "name": "STATISTIKA DAN PROBABILITAS", "meetings": [1, 2, 3]},
+            {"code": "20251-03ALGO002-22TIF0093", "name": "ANALISIS DAN PERANCANGAN ALGORITMA", "meetings": [1, 2, 3]},
+            {"code": "20251-03JKOM003-22TIF0093", "name": "JARINGAN KOMPUTER", "meetings": [1, 2, 3]}
+        ]
+
 def load_courses_mapping():
     """Load course mapping from courses.json file"""
     try:
@@ -281,14 +297,27 @@ def extract_available_forums_from_result(result: str) -> list:
                             # Always prioritize mapping over any extracted code
                             final_course_code = course_map.get(current_course)
                             
-                            # Only add if we have a valid mapping
+                            # Only add if we have a valid mapping AND meeting number is in JSON
                             if final_course_code:
-                                available_forums.append({
-                                    'course_name': current_course,
-                                    'course_code': final_course_code,
-                                    'meeting_number': meeting_number,
-                                    'status': 'available'
-                                })
+                                # Validate meeting number against JSON data
+                                courses_data = load_courses_data()
+                                valid_meeting = False
+                                for course in courses_data:
+                                    if course['code'] == final_course_code:
+                                        if meeting_number in course['meetings']:
+                                            valid_meeting = True
+                                        break
+                                
+                                # Only add if meeting number is valid according to JSON
+                                if valid_meeting:
+                                    available_forums.append({
+                                        'course_name': current_course,
+                                        'course_code': final_course_code,
+                                        'meeting_number': meeting_number,
+                                        'status': 'available'
+                                    })
+                                else:
+                                    print(f"DEBUG: Ignoring meeting {meeting_number} for {current_course} - not in JSON meetings")
                 except (ValueError, AttributeError):
                     continue
     
@@ -309,19 +338,22 @@ def extract_available_forums_from_result(result: str) -> list:
     
     if len(available_forums) == 0 and status_available:
         print(f"DEBUG: Using fallback logic - creating forums for all courses")
-        # Create forums for all known courses (assuming meeting 2 as default)
-        course_map = load_courses_mapping()
+        # Create forums for all known courses using meetings from JSON
+        courses_data = load_courses_data()
         
-        for course_name, course_code in course_map.items():
-            # Skip shortened versions to avoid duplicates
-            if course_name != 'STATISTIKA DAN PROB':
+        for course in courses_data:
+            course_name = course['name']
+            course_code = course['code']
+            
+            # Create a forum entry for each meeting defined in JSON
+            for meeting_number in course['meetings']:
                 available_forums.append({
                     'course_name': course_name,
                     'course_code': course_code,
-                    'meeting_number': 2,  # Default meeting
+                    'meeting_number': meeting_number,
                     'status': 'available'
                 })
-        print(f"DEBUG: Created {len(available_forums)} fallback forums")
+        print(f"DEBUG: Created {len(available_forums)} fallback forums using JSON meetings")
     
     return available_forums
 
